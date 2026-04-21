@@ -34,8 +34,11 @@ FEEDS = [
     {"name": "Prachachat", "url": "https://www.prachachat.net/rss.xml"},
     {"name": "InfoQuest", "url": "https://www.infoquest.co.th/rss"},
     {"name": "The Standard", "url": "https://thestandard.co/feed"},
+    # International sources (always reliable)
+    {"name": "Reuters Asia", "url": "https://feeds.reuters.com/reuters/INbusinessNews"},
+    {"name": "Bloomberg Markets", "url": "https://feeds.bloomberg.com/markets/news.rss"},
+    {"name": "Financial Times Asia", "url": "https://www.ft.com/asia-pacific?format=rss"},
 ]
-
 CATEGORIES = {
     "Government": ["government","ministry","policy","boi","cabinet","regulation","prime minister","nesdc","announce","approve","law","decree"],
     "Investment": ["invest","fdi","billion","million","baht","factory","plant","eec","expand","acquisition","fund","capital","joint venture","project"],
