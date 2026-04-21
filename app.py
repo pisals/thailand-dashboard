@@ -26,20 +26,23 @@ st.markdown("""
 st_autorefresh(interval=600_000, key="news_refresh")
 
 FEEDS = [
-    {"name": "InfoQuest", "url": "https://www.infoquest.co.th/feed"},
-    {"name": "RYT9", "url": "https://www.ryt9.com/rss"},
-    {"name": "Prachachat", "url": "https://www.prachachat.net/feed"},
-    {"name": "M Report", "url": "https://www.mreport.co.th/feed"},
+    # Verified working Thai sources
     {"name": "Bangkok Post", "url": "https://www.bangkokpost.com/rss/data/business.xml"},
-    {"name": "Thansettakij", "url": "https://www.thansettakij.com/feed"},
-    {"name": "Nation Thailand", "url": "https://www.nationthailand.com/rss.xml"},
-    {"name": "Thailand Business News", "url": "https://www.thailand-business-news.com/feed"},
-    {"name": "Bangkok Biz News", "url": "https://www.bangkokbiznews.com/rss"},
-    {"name": "Thai PBS World", "url": "https://world.thaipbs.or.th/feed"},
+    {"name": "Bangkok Post Tech", "url": "https://www.bangkokpost.com/rss/data/tech.xml"},
     {"name": "The Standard", "url": "https://thestandard.co/feed"},
     {"name": "The Thaiger", "url": "https://thethaiger.com/feed"},
-    {"name": "Nikkei Asia", "url": "https://asia.nikkei.com/rss/feed/section/business"},
-    {"name": "Reuters Business", "url": "https://feeds.reuters.com/reuters/businessNews"},
+    {"name": "Thailand Business News", "url": "https://www.thailand-business-news.com/feed"},
+    {"name": "InfoQuest", "url": "https://www.infoquest.co.th/rss"},
+    {"name": "Thai PBS World", "url": "https://www.thaipbsworld.com/feed/"},
+    {"name": "Nation Thailand", "url": "https://www.nationthailand.com/feeds/rss.xml"},
+    
+    # International sources covering Thailand/Asia
+    {"name": "Reuters Asia Business", "url": "https://feeds.reuters.com/reuters/INbusinessNews"},
+    {"name": "Bloomberg Asia", "url": "https://feeds.bloomberg.com/markets/news.rss"},
+    {"name": "Nikkei Asia", "url": "https://asia.nikkei.com/rss/feed/nar"},
+    {"name": "South China Morning Post", "url": "https://www.scmp.com/rss/91/feed"},
+    {"name": "Channel News Asia", "url": "https://www.channelnewsasia.com/api/v1/rss-outbound-feed?_format=xml&category=6511"},
+    {"name": "Jakarta Post Business", "url": "https://www.thejakartapost.com/rss/business"},
 ]
 
 CATEGORIES = {
