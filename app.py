@@ -27,7 +27,6 @@ st_autorefresh(interval=600_000, key="news_refresh")
 
 FEEDS = [
     {"name": "Bangkok Post", "url": "https://www.bangkokpost.com/rss/data/business.xml"},
-    {"name": "Bangkok Post Tech", "url": "https://www.bangkokpost.com/rss/data/tech.xml"},
     {"name": "Nation Thailand", "url": "https://www.nationthailand.com/feeds/rss.xml"},
     {"name": "Thai PBS World", "url": "https://www.thaipbsworld.com/feed/"},
     {"name": "The Thaiger", "url": "https://thethaiger.com/feed"},
@@ -35,9 +34,6 @@ FEEDS = [
     {"name": "Prachachat", "url": "https://www.prachachat.net/rss.xml"},
     {"name": "InfoQuest", "url": "https://www.infoquest.co.th/rss"},
     {"name": "The Standard", "url": "https://thestandard.co/feed"},
-    {"name": "Nikkei Asia", "url": "https://asia.nikkei.com/rss/feed/nar"},
-    {"name": "Reuters Business", "url": "https://www.reutersagency.com/feed/?taxonomy=best-topics&post_type=best"},
-    {"name": "Bloomberg Asia", "url": "https://feeds.bloomberg.com/markets/news.rss"},
 ]
 
 CATEGORIES = {
