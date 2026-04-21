@@ -1,134 +1,286 @@
-import streamlit as st
-import feedparser
-import json
-import re
-from datetime import datetime, timedelta
-from streamlit_autorefresh import st_autorefresh
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1"/>
+<title>Thailand Manufacturing Intelligence</title>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<style>
+*{box-sizing:border-box;margin:0;padding:0;}
+body{font-family:'Segoe UI',system-ui,sans-serif;background:#0d1117;color:#e6edf3;font-size:14px;}
+.wrap{padding:14px;max-width:1600px;margin:0 auto;}
+.hdr{display:flex;justify-content:space-between;align-items:center;background:#161b27;border:1px solid #2a2f3e;border-radius:12px;padding:14px 20px;margin-bottom:14px;}
+.hdr-title{font-size:18px;font-weight:700;}
+.hdr-sub{font-size:11px;color:#7a8099;margin-top:3px;}
+.live-badge{display:flex;align-items:center;gap:8px;font-size:11px;color:#7a8099;background:#0d1117;border:1px solid #2a2f3e;border-radius:20px;padding:5px 14px;}
+.dot{width:8px;height:8px;border-radius:50%;background:#1D9E75;animation:pulse 2s infinite;}
+@keyframes pulse{0%,100%{opacity:1;}50%{opacity:.3;}}
+.kpis{display:grid;grid-template-columns:repeat(5,1fr);gap:10px;margin-bottom:14px;}
+.kpi{background:#161b27;border:1px solid #2a2f3e;border-radius:12px;padding:14px 16px;}
+.kpi-lbl{font-size:10px;color:#7a8099;text-transform:uppercase;letter-spacing:.5px;margin-bottom:6px;}
+.kpi-val{font-size:24px;font-weight:700;line-height:1;margin-bottom:4px;}
+.up{color:#1D9E75;font-size:11px;}.dn{color:#E24B4A;font-size:11px;}.nt{color:#BA7517;font-size:11px;}
+.layout{display:grid;grid-template-columns:1fr 340px;gap:14px;}
+.panel{background:#161b27;border:1px solid #2a2f3e;border-radius:12px;padding:14px;margin-bottom:14px;}
+.sec{font-size:12px;font-weight:700;color:#fff;text-transform:uppercase;letter-spacing:.5px;border-bottom:1px solid #2a2f3e;padding-bottom:8px;margin-bottom:12px;}
+.filter-row{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:10px;}
+.fbtn{font-size:11px;padding:5px 13px;border-radius:20px;border:1px solid #2a2f3e;background:#0d1117;color:#7a8099;cursor:pointer;transition:all .15s;}
+.fbtn:hover{border-color:#4a5270;color:#d8dce8;}
+.fbtn.active{background:#1D9E75;color:#fff;border-color:#1D9E75;}
+.src-grid{display:grid;grid-template-columns:1fr 1fr;gap:5px;margin-bottom:12px;max-height:280px;overflow-y:auto;padding-right:4px;}
+.src-grid::-webkit-scrollbar{width:4px;}
+.src-grid::-webkit-scrollbar-thumb{background:#2a2f3e;border-radius:4px;}
+.stog{display:flex;align-items:center;gap:6px;font-size:10px;color:#7a8099;padding:5px 8px;border-radius:6px;cursor:pointer;border:1px solid #2a2f3e;background:#0d1117;transition:all .15s;user-select:none;}
+.stog.on{background:rgba(29,158,117,.12);border-color:#1D9E75;color:#d8dce8;}
+.chk{width:10px;height:10px;border-radius:2px;background:#1D9E75;flex-shrink:0;}
+.stog:not(.on) .chk{background:#2a2f3e;}
+.news-list{display:flex;flex-direction:column;gap:8px;max-height:75vh;overflow-y:auto;padding-right:4px;}
+.news-list::-webkit-scrollbar{width:4px;}
+.news-list::-webkit-scrollbar-thumb{background:#2a2f3e;border-radius:4px;}
+.ncard{background:#0d1117;border:1px solid #2a2f3e;border-radius:10px;padding:12px 14px;transition:border-color .15s;}
+.ncard:hover{border-color:#3a4060;}
+.ncard-top{display:flex;align-items:center;gap:8px;margin-bottom:6px;flex-wrap:wrap;}
+.tag{font-size:9px;font-weight:700;padding:3px 9px;border-radius:10px;text-transform:uppercase;letter-spacing:.4px;}
+.tg-Government{background:rgba(15,110,86,.2);color:#1D9E75;}
+.tg-Investment{background:rgba(24,95,165,.2);color:#378ADD;}
+.tg-GDP{background:rgba(133,79,11,.2);color:#BA7517;}
+.tg-Industry{background:rgba(83,74,183,.2);color:#7F77DD;}
+.tg-Oil{background:rgba(59,109,17,.2);color:#639922;}
+.tg-Petrochemical{background:rgba(153,60,29,.2);color:#D85A30;}
+.tg-Support{background:rgba(153,53,86,.2);color:#D4537E;}
+.nsrc{font-size:10px;color:#4a5270;margin-left:auto;}
+.ndate{font-size:10px;color:#4a5270;}
+.ntitle{font-size:14px;font-weight:600;color:#d8dce8;line-height:1.4;margin-bottom:5px;}
+.ndesc{font-size:11px;color:#7a8099;line-height:1.6;margin-bottom:8px;}
+.nactions{display:flex;gap:8px;}
+.abtn{font-size:11px;color:#7a8099;padding:4px 11px;border:1px solid #2a2f3e;border-radius:6px;cursor:pointer;background:none;transition:all .15s;}
+.abtn:hover{border-color:#4a5270;color:#d8dce8;}
+.alink{font-size:11px;color:#378ADD;text-decoration:none;padding:4px 11px;border:1px solid rgba(55,138,221,.3);border-radius:6px;transition:all .15s;}
+.alink:hover{background:rgba(55,138,221,.1);}
+.loadmore{width:100%;margin-top:10px;padding:9px;font-size:12px;background:#0d1117;border:1px solid #2a2f3e;border-radius:10px;color:#7a8099;cursor:pointer;transition:all .15s;font-weight:500;}
+.loadmore:hover{border-color:#1D9E75;color:#1D9E75;}
+.ind-row{display:flex;justify-content:space-between;padding:6px 0;border-bottom:1px solid #2a2f3e;font-size:12px;}
+.ind-lbl{color:#7a8099;}.ind-val{font-weight:600;}
+.chart-wrap{position:relative;height:170px;}
+.kw-cloud{display:flex;flex-wrap:wrap;gap:6px;}
+.kw{font-size:11px;padding:4px 10px;border-radius:12px;background:#0d1117;border:1px solid #2a2f3e;color:#7a8099;}
+.kw.hot{background:rgba(29,158,117,.12);border-color:#1D9E75;color:#1D9E75;font-weight:600;}
+.kw.warm{background:rgba(186,117,23,.1);border-color:#BA7517;color:#BA7517;}
+.src-link{display:block;font-size:11px;color:#7a8099;padding:6px 0;border-bottom:1px solid #2a2f3e;text-decoration:none;transition:color .15s;}
+.src-link:hover{color:#378ADD;}
+.src-link:last-child{border-bottom:none;}
+.count-lbl{font-size:11px;color:#4a5270;margin-bottom:8px;font-weight:500;}
+.tog-all-btn{font-size:10px;color:#378ADD;cursor:pointer;background:none;border:none;margin-left:auto;padding:3px 8px;border-radius:4px;transition:background .15s;}
+.tog-all-btn:hover{background:rgba(55,138,221,.1);}
+.src-hdr{display:flex;align-items:center;margin-bottom:8px;}
+.src-hdr-lbl{font-size:11px;color:#7a8099;font-weight:600;}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="hdr">
+    <div>
+      <div class="hdr-title">🇹🇭 Thailand Manufacturing Intelligence Dashboard</div>
+      <div class="hdr-sub">Government · Investment · GDP · Industry · Oil &amp; Gas · Petrochemical · Support — Auto-refreshes every 10 min</div>
+    </div>
+    <div class="live-badge"><span class="dot"></span>Live &nbsp;|&nbsp; <span id="clock">__LAST_UPDATED__</span></div>
+  </div>
 
-st.set_page_config(
-    page_title="Thailand Manufacturing Intelligence",
-    page_icon="🇹🇭",
-    layout="wide"
-)
+  <div class="kpis">
+    <div class="kpi"><div class="kpi-lbl">GDP Growth Q1 2026</div><div class="kpi-val">3.2%</div><div class="up">▲ +0.4pp vs Q4</div></div>
+    <div class="kpi"><div class="kpi-lbl">Manufacturing PMI Mar</div><div class="kpi-val">51.4</div><div class="up">▲ Expansion Zone</div></div>
+    <div class="kpi"><div class="kpi-lbl">FDI Approved Q1</div><div class="kpi-val">฿142B</div><div class="up">▲ +18% YoY</div></div>
+    <div class="kpi"><div class="kpi-lbl">Crude Brent Price</div><div class="kpi-val">$78.4</div><div class="dn">▼ -1.3% WoW</div></div>
+    <div class="kpi"><div class="kpi-lbl">Industrial Export Mar</div><div class="kpi-val">$19.8B</div><div class="nt">▼ -1.2% MoM</div></div>
+  </div>
 
-st_autorefresh(interval=600_000, key="news_refresh")
+  <div class="layout">
+    <div>
+      <div class="panel">
+        <div class="sec">Live News Feed — Thailand Manufacturing</div>
+        <div class="src-hdr"><span class="src-hdr-lbl">News Sources (14 feeds)</span><button class="tog-all-btn" id="togAllBtn">Deselect all</button></div>
+        <div class="src-grid" id="srcGrid"></div>
+        <div style="font-size:11px;color:#7a8099;font-weight:600;margin-bottom:6px;">Category</div>
+        <div class="filter-row" id="catFilter"></div>
+        <div style="font-size:11px;color:#7a8099;font-weight:600;margin-bottom:6px;">Period</div>
+        <div class="filter-row" id="dateFilter"></div>
+        <div class="count-lbl" id="countLbl"></div>
+        <div class="news-list" id="newsList"></div>
+        <button class="loadmore" id="loadMoreBtn">Load more articles</button>
+      </div>
+    </div>
 
-FEEDS = [
-    {"name": "Bangkok Post", "url": "https://www.bangkokpost.com/rss/data/business.xml"},
-    {"name": "Nation Thailand", "url": "https://www.nationthailand.com/rss.xml"},
-    {"name": "Thai PBS World", "url": "https://world.thaipbs.or.th/feed"},
-    {"name": "The Thaiger", "url": "https://thethaiger.com/feed"},
-    {"name": "Nikkei Asia", "url": "https://asia.nikkei.com/rss/feed/section/business"},
-    {"name": "Reuters Business", "url": "https://feeds.reuters.com/reuters/businessNews"},
-    {"name": "Thailand Business News", "url": "https://www.thailand-business-news.com/feed"},
-    {"name": "Prachachat", "url": "https://www.prachachat.net/feed"},
-    {"name": "Thansettakij", "url": "https://www.thansettakij.com/feed"},
-    {"name": "Bangkok Biz News", "url": "https://www.bangkokbiznews.com/rss"},
-    {"name": "InfoQuest", "url": "https://www.infoquest.co.th/feed"},
-    {"name": "RYT9", "url": "https://www.ryt9.com/rss"},
-    {"name": "M Report", "url": "https://www.mreport.co.th/feed"},
-]
+    <div>
+      <div class="panel">
+        <div class="sec">PMI Trend (Apr 2025 – Mar 2026)</div>
+        <div class="chart-wrap"><canvas id="pmiChart"></canvas></div>
+      </div>
+      <div class="panel">
+        <div class="sec">Key Economic Indicators</div>
+        <div id="indicators"></div>
+      </div>
+      <div class="panel">
+        <div class="sec">Article Distribution by Category</div>
+        <div class="chart-wrap" style="height:150px;"><canvas id="catChart"></canvas></div>
+      </div>
+      <div class="panel">
+        <div class="sec">Trending Keywords</div>
+        <div class="kw-cloud">
+          <span class="kw hot">EV</span><span class="kw hot">BOI</span><span class="kw hot">LNG</span><span class="kw hot">PMI</span><span class="kw hot">PTTEP</span><span class="kw hot">FDI</span>
+          <span class="kw warm">GDP</span><span class="kw warm">PTTGC</span><span class="kw warm">IRPC</span><span class="kw warm">paraxylene</span><span class="kw warm">EEC</span><span class="kw warm">hydrogen</span>
+          <span class="kw">semiconductor</span><span class="kw">Map Ta Phut</span><span class="kw">Rayong</span><span class="kw">automotive</span><span class="kw">cracker</span><span class="kw">battery</span>
+        </div>
+      </div>
+      <div class="panel">
+        <div class="sec">Source Links</div>
+        <a class="src-link" href="https://www.infoquest.co.th" target="_blank">↗ InfoQuest</a>
+        <a class="src-link" href="https://www.ryt9.com" target="_blank">↗ RYT9</a>
+        <a class="src-link" href="https://www.prachachat.net" target="_blank">↗ Prachachat</a>
+        <a class="src-link" href="https://www.mreport.co.th" target="_blank">↗ M Report</a>
+        <a class="src-link" href="https://www.bangkokpost.com/business" target="_blank">↗ Bangkok Post</a>
+        <a class="src-link" href="https://www.thansettakij.com" target="_blank">↗ Thansettakij</a>
+        <a class="src-link" href="https://www.nationthailand.com" target="_blank">↗ Nation Thailand</a>
+        <a class="src-link" href="https://www.thailand-business-news.com" target="_blank">↗ Thailand Business News</a>
+        <a class="src-link" href="https://www.bangkokbiznews.com" target="_blank">↗ Bangkok Biz News</a>
+        <a class="src-link" href="https://world.thaipbs.or.th" target="_blank">↗ Thai PBS World</a>
+        <a class="src-link" href="https://thestandard.co" target="_blank">↗ The Standard</a>
+        <a class="src-link" href="https://thethaiger.com" target="_blank">↗ The Thaiger</a>
+        <a class="src-link" href="https://asia.nikkei.com" target="_blank">↗ Nikkei Asia</a>
+        <a class="src-link" href="https://www.reuters.com/business" target="_blank">↗ Reuters Business</a>
+      </div>
+    </div>
+  </div>
 
-CATEGORIES = {
-    "Government": ["government","ministry","policy","boi","cabinet","regulation","prime minister","nesdc","announce","approve","law"],
-    "Investment": ["invest","fdi","billion","million","baht","factory","plant","eec","expand","acquisition","fund","capital","joint venture"],
-    "GDP / Economy": ["gdp","growth","economy","inflation","rate","bank of thailand","export","import","trade","forecast","quarter","bot"],
-    "Industry": ["manufactur","industrial","automotive","ev","electric vehicle","semiconductor","electronics","pmi","mpi","supply chain","assembly"],
-    "Oil & Gas": ["oil","gas","petroleum","pttep","lng","crude","refin","upstream","offshore","brent","barrel","fuel","natural gas"],
-    "Petrochemical": ["petrochemical","pttgc","irpc","ethylene","polymer","cracker","aromatic","paraxylene","chemical","feedstock","naphtha","olefin","styrene"],
-    "Support": ["support","subsidy","grant","incentive","tax","tariff","sme","loan","rebate","training","skill","promotion","scheme"],
+  <div style="text-align:center;font-size:11px;color:#4a5270;padding:14px 0;border-top:1px solid #2a2f3e;margin-top:10px;">
+    Thailand Manufacturing Intelligence Dashboard · Auto-refreshes every 10 min · Last updated: __LAST_UPDATED__
+  </div>
+</div>
+
+<script>
+var ALL_NEWS=__NEWS_DATA__;
+var SOURCES_LIST=[...new Set(ALL_NEWS.map(function(a){return a.source;}))];
+var CATS=["All","Government","Investment","GDP / Economy","Industry","Oil & Gas","Petrochemical","Support"];
+var DATE_MODES=["All time","Today","7 days","30 days","3 months"];
+var selSources={};SOURCES_LIST.forEach(function(s){selSources[s]=true;});
+var activeCat="All",activeDateMode="All time",visibleCount=20;
+
+var srcGrid=document.getElementById("srcGrid");
+SOURCES_LIST.forEach(function(s){
+  var el=document.createElement("div");el.className="stog on";el.setAttribute("data-s",s);
+  el.innerHTML='<div class="chk"></div><span>'+s+'</span>';srcGrid.appendChild(el);
+});
+srcGrid.addEventListener("click",function(e){
+  var t=e.target.closest(".stog");if(!t)return;var s=t.getAttribute("data-s");
+  selSources[s]=!selSources[s];t.classList.toggle("on",selSources[s]);visibleCount=20;render();
+});
+var allOn=true;
+document.getElementById("togAllBtn").addEventListener("click",function(){
+  allOn=!allOn;SOURCES_LIST.forEach(function(s){selSources[s]=allOn;});
+  document.querySelectorAll(".stog").forEach(function(t){t.classList.toggle("on",allOn);});
+  this.textContent=allOn?"Deselect all":"Select all";render();
+});
+
+var catFilter=document.getElementById("catFilter");
+CATS.forEach(function(c){
+  var b=document.createElement("button");b.className="fbtn"+(c==="All"?" active":"");
+  b.setAttribute("data-c",c);b.textContent=c;catFilter.appendChild(b);
+});
+catFilter.addEventListener("click",function(e){
+  var b=e.target.closest(".fbtn");if(!b)return;activeCat=b.getAttribute("data-c");
+  catFilter.querySelectorAll(".fbtn").forEach(function(x){x.classList.remove("active");});
+  b.classList.add("active");visibleCount=20;render();
+});
+
+var dateFilter=document.getElementById("dateFilter");
+DATE_MODES.forEach(function(m){
+  var b=document.createElement("button");b.className="fbtn"+(m==="All time"?" active":"");
+  b.setAttribute("data-d",m);b.textContent=m;dateFilter.appendChild(b);
+});
+dateFilter.addEventListener("click",function(e){
+  var b=e.target.closest(".fbtn");if(!b)return;activeDateMode=b.getAttribute("data-d");
+  dateFilter.querySelectorAll(".fbtn").forEach(function(x){x.classList.remove("active");});
+  b.classList.add("active");visibleCount=20;render();
+});
+
+function parseDate(s){
+  var p=s.split(" ");var mo={Jan:0,Feb:1,Mar:2,Apr:3,May:4,Jun:5,Jul:6,Aug:7,Sep:8,Oct:9,Nov:10,Dec:11};
+  return new Date(parseInt(p[2]),mo[p[1]],parseInt(p[0]));
+}
+function filterNews(){
+  var now=new Date();var cutoff=null;
+  if(activeDateMode==="Today"){cutoff=new Date(now.getFullYear(),now.getMonth(),now.getDate());}
+  else if(activeDateMode==="7 days"){cutoff=new Date(now-7*864e5);}
+  else if(activeDateMode==="30 days"){cutoff=new Date(now-30*864e5);}
+  else if(activeDateMode==="3 months"){cutoff=new Date(now-90*864e5);}
+  return ALL_NEWS.filter(function(a){
+    if(!selSources[a.source])return false;
+    if(activeCat!=="All"&&a.cat!==activeCat)return false;
+    if(cutoff&&parseDate(a.date)<cutoff)return false;
+    return true;
+  });
+}
+function tagClass(cat){
+  return {"Government":"tg-Government","Investment":"tg-Investment","GDP / Economy":"tg-GDP",
+          "Industry":"tg-Industry","Oil & Gas":"tg-Oil","Petrochemical":"tg-Petrochemical","Support":"tg-Support"}[cat]||"tg-Industry";
 }
 
-def clean_html(raw):
-    clean = re.sub(r"<[^>]+>", "", raw or "")
-    clean = re.sub(r"&[a-zA-Z#0-9]+;", " ", clean)
-    return re.sub(r"\s+", " ", clean).strip()
+var catChartInst=null;
+function render(){
+  var filtered=filterNews();var shown=filtered.slice(0,visibleCount);
+  document.getElementById("countLbl").textContent=filtered.length+" article"+(filtered.length!==1?"s":"")+" found";
+  document.getElementById("loadMoreBtn").style.display=visibleCount>=filtered.length?"none":"block";
+  var list=document.getElementById("newsList");list.innerHTML="";
+  shown.forEach(function(a){
+    var card=document.createElement("div");card.className="ncard";
+    card.innerHTML='<div class="ncard-top"><span class="tag '+tagClass(a.cat)+'">'+a.cat+'</span>'+
+      '<span class="nsrc">'+a.source+'</span><span class="ndate">'+a.date+'</span></div>'+
+      '<div class="ntitle">'+a.title+'</div><div class="ndesc">'+a.desc+'</div>'+
+      '<div class="nactions"><button class="abtn">Expand</button>'+
+      '<a class="alink" href="'+a.link+'" target="_blank">Full article ↗</a></div>';
+    list.appendChild(card);
+  });
+  updateCatChart(filtered);
+}
+document.getElementById("loadMoreBtn").addEventListener("click",function(){visibleCount+=15;render();});
 
-def classify(text):
-    t = text.lower()
-    scores = {cat: sum(1 for kw in kws if kw in t) for cat, kws in CATEGORIES.items()}
-    best = max(scores, key=scores.get)
-    return best if scores[best] > 0 else "Industry"
+(function(){
+  var ctx=document.getElementById("pmiChart").getContext("2d");
+  new Chart(ctx,{type:"line",
+    data:{labels:["Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec","Jan","Feb","Mar"],
+      datasets:[{data:[49.8,50.2,50.7,51.1,50.5,49.9,50.3,50.8,51.2,51.0,51.3,51.4],
+        borderColor:"#1D9E75",backgroundColor:"rgba(29,158,117,0.12)",fill:true,tension:0.3,pointRadius:4,pointBackgroundColor:"#1D9E75"}]},
+    options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},
+      scales:{x:{grid:{display:false},ticks:{color:"#7a8099",font:{size:11}},border:{color:"#2a2f3e"}},
+              y:{min:49,max:52,grid:{color:"#2a2f3e"},ticks:{color:"#7a8099",font:{size:11}},border:{display:false}}}}});
+})();
 
-def parse_date(entry):
-    for attr in ("published_parsed", "updated_parsed"):
-        val = getattr(entry, attr, None)
-        if val:
-            try:
-                return datetime(*val[:6])
-            except:
-                pass
-    return datetime.now()
+function updateCatChart(filtered){
+  var cats=["Government","Investment","GDP / Economy","Industry","Oil & Gas","Petrochemical","Support"];
+  var lbls=["Gov","Invest","GDP","Ind","Oil","Petro","Sup"];
+  var colors=["#1D9E75","#378ADD","#BA7517","#7F77DD","#639922","#D85A30","#D4537E"];
+  var counts={};cats.forEach(function(c){counts[c]=0;});
+  filtered.forEach(function(a){if(counts[a.cat]!==undefined)counts[a.cat]++;});
+  var data=cats.map(function(c){return counts[c];});
+  var ctx=document.getElementById("catChart").getContext("2d");
+  if(catChartInst){catChartInst.data.datasets[0].data=data;catChartInst.update();return;}
+  catChartInst=new Chart(ctx,{type:"bar",
+    data:{labels:lbls,datasets:[{data:data,backgroundColor:colors,borderRadius:4,borderSkipped:false}]},
+    options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},
+      scales:{x:{grid:{display:false},ticks:{color:"#7a8099",font:{size:10}},border:{display:false}},
+              y:{grid:{color:"#2a2f3e"},ticks:{color:"#7a8099",font:{size:10},maxTicksLimit:5},border:{display:false}}}}});
+}
 
-def get_fallback():
-    now = datetime.now()
-    def d(n): return now - timedelta(days=n)
-    return [
-        {"title":"BOI approves ฿38B in EV and semiconductor projects Q1 2026","desc":"Board of Investment grants 47 approvals targeting electronics and clean energy manufacturers.","link":"https://www.boi.go.th","date":d(0),"source":"BOI Thailand","cat":"Government"},
-        {"title":"PTT Exploration completes Gulf of Thailand well — 45 mmscfd discovery","desc":"PTTEP confirms significant natural gas discovery extending production to 2040.","link":"https://www.bangkokpost.com","date":d(1),"source":"Bangkok Post","cat":"Oil & Gas"},
-        {"title":"IRPC invests ฿15B in petrochemical complex upgrade at Map Ta Phut","desc":"IRPC targets high-value specialty polymers to improve margins.","link":"https://www.thansettakij.com","date":d(2),"source":"Thansettakij","cat":"Petrochemical"},
-        {"title":"Manufacturing PMI hits 51.4 — third straight month of expansion","desc":"Thai manufacturing expanded for a third consecutive month on new export orders.","link":"https://www.bangkokpost.com","date":d(2),"source":"Bangkok Post","cat":"Industry"},
-        {"title":"NESDC raises 2026 GDP forecast to 3.2–4.0%","desc":"Thailand upgraded outlook citing stronger industrial output and tourism recovery.","link":"https://www.nesdc.go.th","date":d(3),"source":"NESDC","cat":"GDP / Economy"},
-        {"title":"EEC records ฿220B investment applications in Q1 2026","desc":"Eastern Economic Corridor hits highest-ever quarterly investment figure.","link":"https://www.eec.or.th","date":d(5),"source":"EEC Office","cat":"Investment"},
-        {"title":"Bangchak to build 100MW green hydrogen plant in Rayong","desc":"Refinery-to-hydrogen pivot supports Thailand net-zero 2065 target.","link":"https://www.bangkokpost.com","date":d(6),"source":"Bangkok Post","cat":"Oil & Gas"},
-        {"title":"Olefins cracker margin recovery boosts PTTGC and IRPC outlook","desc":"Ethylene-naphtha spread widens to $180/t as ASEAN demand recovers.","link":"https://www.thansettakij.com","date":d(7),"source":"Thansettakij","cat":"Petrochemical"},
-        {"title":"FDI inflows jump 18% year-on-year — ฿142B in Q1 2026","desc":"Strong investment from Japan, China, and Europe drives record Q1 FDI.","link":"https://www.bot.or.th","date":d(8),"source":"Bank of Thailand","cat":"Investment"},
-        {"title":"OIE launches SME factory modernization grant","desc":"Industry 4.0 Upgrade Grant targets manufacturers adopting automation.","link":"https://www.oie.go.th","date":d(9),"source":"OIE","cat":"Support"},
-        {"title":"PTT Group announces ฿180B upstream capex plan","desc":"State energy giant accelerates gas production and CCUS investment.","link":"https://www.infoquest.co.th","date":d(10),"source":"InfoQuest","cat":"Oil & Gas"},
-        {"title":"Thai Paraxylene exports hit five-year high","desc":"PX production exceeds 3M tonnes as Asian PET demand surges.","link":"https://www.bangkokbiznews.com","date":d(12),"source":"Bangkok Biz News","cat":"Petrochemical"},
-        {"title":"Samsung SDI to build ฿28B EV battery plant","desc":"South Korean maker secures EEC incentives for 10 GWh facility.","link":"https://asia.nikkei.com","date":d(14),"source":"Nikkei Asia","cat":"Investment"},
-        {"title":"Thailand 2025 GDP confirmed at 3.0%","desc":"Manufacturing contributed 1.4 pp to growth.","link":"https://www.nesdc.go.th","date":d(20),"source":"NESDC","cat":"GDP / Economy"},
-        {"title":"Ministry unveils 10-year port cluster plan","desc":"Policy targets southern provinces for petrochemical and LNG.","link":"https://www.moi.go.th","date":d(22),"source":"Ministry of Industry","cat":"Government"},
-    ]
+var INDS=[["Inflation Rate","1.8%","nt"],["Unemployment","0.98%","up"],["MPI Feb 2026","+4.1% YoY","up"],
+          ["EEC Q1 Investment","฿220B","up"],["BOT Policy Rate","2.25%","nt"],["Crude Brent","$78.4/bbl","dn"],
+          ["LNG Spot Price","$8.4/mmBtu","dn"],["PTTGC Share","฿34.50","up"],["IRPC Share","฿2.18","up"],["BOI Approvals Q1","฿142B","up"]];
+var indEl=document.getElementById("indicators");
+INDS.forEach(function(r){
+  var row=document.createElement("div");row.className="ind-row";
+  row.innerHTML='<span class="ind-lbl">'+r[0]+'</span><span class="ind-val '+r[2]+'">'+r[1]+'</span>';
+  indEl.appendChild(row);
+});
 
-@st.cache_data(ttl=600)
-def fetch_all_news():
-    all_items = []
-    for feed in FEEDS:
-        try:
-            parsed = feedparser.parse(feed["url"])
-            for e in parsed.entries[:25]:
-                raw = getattr(e, "summary", "") or ""
-                desc = clean_html(raw)
-                combo = f"{e.get('title','')} {desc}"
-                all_items.append({
-                    "title": clean_html(e.get("title","Untitled")),
-                    "desc": desc[:300],
-                    "link": e.get("link","#"),
-                    "date": parse_date(e),
-                    "source": feed["name"],
-                    "cat": classify(combo),
-                })
-        except:
-            continue
-    
-    all_items.sort(key=lambda x: x["date"], reverse=True)
-    seen, unique = set(), []
-    for item in all_items:
-        key = item["title"][:60]
-        if key not in seen:
-            seen.add(key)
-            unique.append(item)
-    return unique if unique else get_fallback()
-
-def load_html():
-    with open("components/dashboard.html", "r", encoding="utf-8") as f:
-        return f.read()
-
-def build_page(news_items):
-    html = load_html()
-    news_json = json.dumps([{
-        "title": item["title"],
-        "desc": item["desc"],
-        "link": item["link"],
-        "date": item["date"].strftime("%d %b %Y"),
-        "source": item["source"],
-        "cat": item["cat"],
-    } for item in news_items], ensure_ascii=False)
-    html = html.replace("__NEWS_DATA__", news_json)
-    html = html.replace("__LAST_UPDATED__", datetime.now().strftime("%d %b %Y %H:%M"))
-    return html
-
-news = fetch_all_news()
-page_html = build_page(news)
-st.components.v1.html(page_html, height=1200, scrolling=True)
+render();
+</script>
+</body>
+</html>
