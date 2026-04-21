@@ -26,20 +26,18 @@ st.markdown("""
 st_autorefresh(interval=600_000, key="news_refresh")
 
 FEEDS = [
-    {"name": "InfoQuest", "url": "https://www.infoquest.co.th/feed"},
-    {"name": "RYT9", "url": "https://www.ryt9.com/rss"},
-    {"name": "Prachachat", "url": "https://www.prachachat.net/feed"},
-    {"name": "M Report", "url": "https://www.mreport.co.th/feed"},
     {"name": "Bangkok Post", "url": "https://www.bangkokpost.com/rss/data/business.xml"},
-    {"name": "Thansettakij", "url": "https://www.thansettakij.com/feed"},
-    {"name": "Nation Thailand", "url": "https://www.nationthailand.com/rss.xml"},
-    {"name": "Thailand Business News", "url": "https://www.thailand-business-news.com/feed"},
-    {"name": "Bangkok Biz News", "url": "https://www.bangkokbiznews.com/rss"},
-    {"name": "Thai PBS World", "url": "https://world.thaipbs.or.th/feed"},
-    {"name": "The Standard", "url": "https://thestandard.co/feed"},
+    {"name": "Bangkok Post Tech", "url": "https://www.bangkokpost.com/rss/data/tech.xml"},
+    {"name": "Nation Thailand", "url": "https://www.nationthailand.com/feeds/rss.xml"},
+    {"name": "Thai PBS World", "url": "https://www.thaipbsworld.com/feed/"},
     {"name": "The Thaiger", "url": "https://thethaiger.com/feed"},
-    {"name": "Nikkei Asia", "url": "https://asia.nikkei.com/rss/feed/section/business"},
-    {"name": "Reuters Business", "url": "https://feeds.reuters.com/reuters/businessNews"},
+    {"name": "Thailand Business News", "url": "https://www.thailand-business-news.com/feed"},
+    {"name": "Prachachat", "url": "https://www.prachachat.net/rss.xml"},
+    {"name": "InfoQuest", "url": "https://www.infoquest.co.th/rss"},
+    {"name": "The Standard", "url": "https://thestandard.co/feed"},
+    {"name": "Nikkei Asia", "url": "https://asia.nikkei.com/rss/feed/nar"},
+    {"name": "Reuters Business", "url": "https://www.reutersagency.com/feed/?taxonomy=best-topics&post_type=best"},
+    {"name": "Bloomberg Asia", "url": "https://feeds.bloomberg.com/markets/news.rss"},
 ]
 
 CATEGORIES = {
